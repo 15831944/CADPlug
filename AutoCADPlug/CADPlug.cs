@@ -24,29 +24,40 @@ namespace AutoCADPlug
     public class CAD : IExtensionApplication
     {
         ContextMenuExtension m_ContextMenu;//定义右键菜单 
-        PaletteSet palSet;//定义工具栏按钮
+        PaletteSet ps;//定义工具栏按钮
 
-        //初始化方法，这里加了一个面板工具栏和右键菜单。如果不要右键菜单，注释即可
         public void Initialize()
         {
             AddContextMenu();//添加右键菜单
             HelloWorld();
         }
 
-        //卸载方法
         public void Terminate()
         { 
             RemoveContextMenu();
         }
 
-        //有CommandMethod标注，是提供给CAD使用的命令
-        [CommandMethod("HelloWorld")]
-        public void HelloWorld()
+        #region 添加自定义面板
+
+        [CommandMethod("AddPalette")]
+        public void AddPalette()
         {
-            //这段代码的作用是弹出一个提示
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-            ed.WriteMessage("第一个CAD插件程序！");
+            MyControl contr = new MyControl();
+            ps = new PaletteSet("PaletteSet");
+
+            ps.Visible = true;
+            ps.Style = PaletteSetStyles.ShowTabForSingle;
+            ps.Style = PaletteSetStyles.NameEditable;
+            ps.Style = PaletteSetStyles.ShowPropertiesMenu;
+            ps.Style = PaletteSetStyles.ShowAutoHideButton;
+            ps.Style = PaletteSetStyles.ShowCloseButton;
+            ps.Opacity = 90;
+            ps.Dock = DockSides.Left;
+            ps.MinimumSize = new System.Drawing.Size(200, 100);
+            ps.Add("PaletteSet", contr);
         }
+
+        #endregion
 
         #region 添加一个右键菜单，并实现画一个圆的功能
         /// <summary>点击响应事件，创建一个圆
@@ -102,45 +113,6 @@ namespace AutoCADPlug
             }
         }
         #endregion
-
-        public void test1()
-        {
-            ContextMenuExtension menuExt = new ContextMenuExtension();
-            menuExt.Title = "psw_test";
-            MenuItem item = new MenuItem("test");
-
-            menuExt.MenuItems.Add(item);
-
-            Application.AddDefaultContextMenuExtension(menuExt);
-
-        }
-
-        public void test2()
-        {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            DocumentLock docLock = doc.LockDocument();
-            Database db = HostApplicationServices.WorkingDatabase;
-            using (Transaction tran = db.TransactionManager.StartTransaction())
-            {
-                BlockTable bt = tran.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-            }
-        }
-
-        public void database_test()
-        {
-            Database db = HostApplicationServices.WorkingDatabase;
-            ObjectId layer =  db.Clayer;
-        }
-
-        [CommandMethod("psw")]
-        public void test3()
-        {
-            Editor editor = Application.DocumentManager.MdiActiveDocument.Editor;
-            //double data = InputOperation.Double("请输入数据！");
-            //ShowMsgOperation.Alert(data.ToString());
-        }
-
 
         #region 用户交互：自定义用户界面
 
@@ -443,6 +415,59 @@ namespace AutoCADPlug
         }
 
         #endregion
+
+        #region something test
+
+
+        [CommandMethod("HelloWorld")]
+        public void HelloWorld()
+        {
+            //这段代码的作用是弹出一个提示
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            ed.WriteMessage("第一个CAD插件程序！");
+        }
+
+
+        public void test1()
+        {
+            ContextMenuExtension menuExt = new ContextMenuExtension();
+            menuExt.Title = "psw_test";
+            MenuItem item = new MenuItem("test");
+
+            menuExt.MenuItems.Add(item);
+
+            Application.AddDefaultContextMenuExtension(menuExt);
+
+        }
+
+        public void test2()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            DocumentLock docLock = doc.LockDocument();
+            Database db = HostApplicationServices.WorkingDatabase;
+            using (Transaction tran = db.TransactionManager.StartTransaction())
+            {
+                BlockTable bt = tran.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+            }
+        }
+
+        public void database_test()
+        {
+            Database db = HostApplicationServices.WorkingDatabase;
+            ObjectId layer =  db.Clayer;
+        }
+
+        [CommandMethod("psw")]
+        public void test3()
+        {
+            Editor editor = Application.DocumentManager.MdiActiveDocument.Editor;
+            //double data = InputOperation.Double("请输入数据！");
+            //ShowMsgOperation.Alert(data.ToString());
+        }
+
+        #endregion
+
 
     }
 }

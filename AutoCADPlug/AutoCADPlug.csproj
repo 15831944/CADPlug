@@ -89,6 +89,12 @@
     <Compile Include="GeometricOperation.cs" />
     <Compile Include="InputOperation.cs" />
     <Compile Include="LayerTableOperation.cs" />
+    <Compile Include="MyControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="MyControl.Designer.cs">
+      <DependentUpon>MyControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="MyForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -102,6 +108,9 @@
     <Compile Include="UserInterface\CADPanel.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="MyControl.resx">
+      <DependentUpon>MyControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MyForm.resx">
       <DependentUpon>MyForm.cs</DependentUpon>
     </EmbeddedResource>
