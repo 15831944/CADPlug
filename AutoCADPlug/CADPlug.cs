@@ -14,6 +14,8 @@ using Autodesk.AutoCAD.Internal.Windows;
 using Autodesk.AutoCAD.Internal.Forms;
 using Autodesk.AutoCAD.Windows.ToolPalette;
 
+
+using Autodesk.AutoCAD.Interop;
 using System;
 using System.Reflection;
 
@@ -29,6 +31,7 @@ namespace AutoCADPlug
         public void Initialize()
         {
             AddContextMenu();//添加右键菜单
+            AddMenuContent(); //添加菜单栏上项目
             HelloWorld();
         }
 
@@ -36,6 +39,45 @@ namespace AutoCADPlug
         { 
             RemoveContextMenu();
         }
+
+        #region 添加菜单栏项目
+
+        public void AddMenuContent()
+        {
+            try
+            {
+
+                AcadApplication acadApp = (AcadApplication)Application.AcadApplication;
+
+                //添加根菜单
+                AcadPopupMenu pMenu = acadApp.MenuGroups.Item(0).Menus.Add("psw二次开发");
+
+                //添加子菜单项,多级
+                AcadPopupMenu cMenu = pMenu.AddSubMenu(pMenu.Count + 1, "液压插件");
+                AcadPopupMenuItem cMenuItem0 = cMenu.AddMenuItem(cMenu.Count + 1, "插件1", "hydrPlugin1\n");
+                AcadPopupMenuItem cMenuItem1 = cMenu.AddMenuItem(cMenu.Count + 1, "插件2", "hydrPlugin2\n");
+                AcadPopupMenuItem cMenuItem2 = cMenu.AddMenuItem(cMenu.Count + 1, "插件3", "hydrPlugin3\n");
+                //添加分隔条
+                pMenu.AddSeparator(pMenu.Count + 1);
+                //添加子菜单项，单级
+                AcadPopupMenuItem cMenu2 = pMenu.AddMenuItem(pMenu.Count + 1, "建筑插件", "architecturePlugin");
+                pMenu.InsertInMenuBar(acadApp.MenuBar.Count + 1);
+
+            }
+            catch(System.Exception ex)
+            {
+                Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(ex.ToString());
+            }
+        }
+
+        [CommandMethod("hydrPlugin1")]
+        public void showSomething()
+        {
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            ed.WriteMessage("插件1被调用！");
+        }
+
+        #endregion
 
         #region 添加自定义面板
 
