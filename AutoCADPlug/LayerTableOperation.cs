@@ -202,5 +202,31 @@ namespace AutoCADPlug
             }
         }
 
+        /// <summary>
+        /// 根据图层名称，得到图层中所有的实体id
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static ObjectIdCollection GetObjectIdsAtLayer(string name)
+        {
+            ObjectIdCollection ids = new ObjectIdCollection();
+            PromptSelectionResult sResult = null;
+            TypedValue[] filtList = new TypedValue[] { new TypedValue((int)DxfCode.LayerName, name) };
+            SelectionFilter filter = new SelectionFilter(filtList);
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            sResult = ed.SelectAll(filter);
+            if (sResult.Status == PromptStatus.OK)
+            {
+                SelectionSet st = sResult.Value;
+                ObjectId[] oids = st.GetObjectIds();
+
+                foreach (ObjectId id in oids)
+                {
+                    ids.Add(id);
+                }
+            }
+            return ids;
+        }
+
     }
 }

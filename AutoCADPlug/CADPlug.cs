@@ -20,7 +20,7 @@ using System;
 using System.Reflection;
 
 
-[assembly:CommandClass(typeof(AutoCADPlug.CAD))]
+[assembly: CommandClass(typeof(AutoCADPlug.CAD))]
 namespace AutoCADPlug
 {
     public class CAD : IExtensionApplication
@@ -30,13 +30,13 @@ namespace AutoCADPlug
 
         public void Initialize()
         {
-            AddContextMenu();//添加右键菜单
+            //AddContextMenu();//添加右键菜单
             AddMenuContent(); //添加菜单栏上项目
             HelloWorld();
         }
 
         public void Terminate()
-        { 
+        {
             RemoveContextMenu();
         }
 
@@ -60,11 +60,11 @@ namespace AutoCADPlug
                 //添加分隔条
                 pMenu.AddSeparator(pMenu.Count + 1);
                 //添加子菜单项，单级
-                AcadPopupMenuItem cMenu2 = pMenu.AddMenuItem(pMenu.Count + 1, "建筑插件", "architecturePlugin");
+                AcadPopupMenuItem cMenu2 = pMenu.AddMenuItem(pMenu.Count + 1, "建筑插件", "architecturePlugin\n");
                 pMenu.InsertInMenuBar(acadApp.MenuBar.Count + 1);
 
             }
-            catch(System.Exception ex)
+            catch (System.Exception ex)
             {
                 Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(ex.ToString());
             }
@@ -82,10 +82,17 @@ namespace AutoCADPlug
         #region 添加自定义面板
 
         [CommandMethod("AddPalette")]
+        [CommandMethod("architecturePlugin")]
         public void AddPalette()
         {
+            if (ps != null)
+            {
+                return;
+            }
+
             MyControl contr = new MyControl();
             ps = new PaletteSet("PaletteSet");
+
 
             ps.Visible = true;
             ps.Style = PaletteSetStyles.ShowTabForSingle;
@@ -497,7 +504,7 @@ namespace AutoCADPlug
         public void database_test()
         {
             Database db = HostApplicationServices.WorkingDatabase;
-            ObjectId layer =  db.Clayer;
+            ObjectId layer = db.Clayer;
         }
 
         [CommandMethod("psw")]
@@ -506,6 +513,34 @@ namespace AutoCADPlug
             Editor editor = Application.DocumentManager.MdiActiveDocument.Editor;
             //double data = InputOperation.Double("请输入数据！");
             //ShowMsgOperation.Alert(data.ToString());
+        }
+
+        [CommandMethod("hydrPlugin2")]
+        public void TestCreateRec()
+        {
+            //创建矩形
+            Point3d bPoint = Point3d.Origin;
+            double height = 100;
+            double width = 200;
+            Point3d upperLeft = new Point3d(bPoint.X, bPoint.Y + height, 0);
+            Point3d upperRight = new Point3d(bPoint.X + width, bPoint.Y + height, 0);
+            Point3d lowerLeft = new Point3d(bPoint.X, bPoint.Y, 0);
+            Point3d lowerRight = new Point3d(bPoint.X + width, bPoint.Y, 0);
+
+            DBObjectCollection objs = new DBObjectCollection();
+            Line line2 = new Line(lowerLeft, upperLeft);
+            Line line3 = new Line(upperLeft, upperRight);
+            Line line4 = new Line(upperRight, lowerRight);
+            Line line1 = new Line(lowerRight, lowerLeft);
+            objs.Add(line1);
+            objs.Add(line2);
+            objs.Add(line3);
+            objs.Add(line4);
+
+            //将矩形添加到数据库中
+            Database db = DBOperation.GetDocumentDatabase();
+            //DBOperation.AddToModelSpace(objs);
+            DBOperation.AddToModelSpace(objs, db);
         }
 
         #endregion

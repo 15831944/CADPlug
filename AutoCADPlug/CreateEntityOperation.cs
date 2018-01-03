@@ -8,13 +8,23 @@ namespace AutoCADPlug
 {
     public class CreateEntityOperation
     {
+        public static Rectangle3d CreateRectangle(double height,double width,Point3d bPoint)
+        {
+            Point3d upperLeft = new Point3d(bPoint.X, bPoint.Y + height, 0);
+            Point3d upperRight = new Point3d(bPoint.X + width, bPoint.Y + height, 0);
+            Point3d lowerLeft = new Point3d(bPoint.X, bPoint.Y, 0);
+            Point3d lowerRight = new Point3d(bPoint.X + width, bPoint.Y, 0);
+
+            return new Rectangle3d(upperLeft, upperRight, lowerLeft, lowerRight);
+        }
+
         /// <summary>
         /// 由两点创建直线
         /// </summary>
         /// <param name="p1"></param>
         /// <param name="p2"></param>
         /// <returns></returns>
-        public static Line Line(Point3d p1, Point3d p2)
+        public static Line CreateLine(Point3d p1, Point3d p2)
         {
             return new Line(p1, p2);
         }
@@ -29,7 +39,7 @@ namespace AutoCADPlug
         /// <param name="y2"></param>
         /// <param name="z2"></param>
         /// <returns></returns>
-        public static Line Line(double x1, double y1, double z1, double x2, double y2, double z2)
+        public static Line CreateLine(double x1, double y1, double z1, double x2, double y2, double z2)
         {
             return new Line(new Point3d(x1, y1, z1), new Point3d(x2, y2, z2));
         }
@@ -40,7 +50,7 @@ namespace AutoCADPlug
         /// <param name="cenPt">圆心</param>
         /// <param name="radius">半径</param>
         /// <returns>圆</returns>
-        public static Circle Circle(Point3d cenPt, double radius)
+        public static Circle CreateCircle(Point3d cenPt, double radius)
         {
             return new Autodesk.AutoCAD.DatabaseServices.Circle(cenPt, Vector3d.ZAxis, radius);
         }
@@ -52,7 +62,7 @@ namespace AutoCADPlug
         /// <param name="pt2">点2</param>
         /// <param name="pt3">点3</param>
         /// <returns>过三点的圆</returns>
-        public static Circle Circle(Point3d pt1, Point3d pt2, Point3d pt3)
+        public static Circle CreateCircle(Point3d pt1, Point3d pt2, Point3d pt3)
         {
             Vector3d va = pt1.GetVectorTo(pt2);
             Vector3d vb = pt1.GetVectorTo(pt3);
@@ -77,7 +87,7 @@ namespace AutoCADPlug
         /// <param name="startAng">起始角度</param>
         /// <param name="endAng">终止角度</param>
         /// <returns>圆弧</returns>
-        public static Arc Arc(Point3d cenPt, double radius, double startAng, double endAng)
+        public static Arc CreateArc(Point3d cenPt, double radius, double startAng, double endAng)
         {
             return new Arc(cenPt, radius, startAng, endAng);
         }
@@ -89,7 +99,7 @@ namespace AutoCADPlug
         /// <param name="sPt">起点</param>
         /// <param name="ePt">终点</param>
         /// <returns></returns>
-        public static Arc Arc(Point3d cenPt, Point3d sPt, Point3d ePt)
+        public static Arc CreateArc(Point3d cenPt, Point3d sPt, Point3d ePt)
         {
             Line l1 = new Line(cenPt, sPt);
             Line l2 = new Line(cenPt, ePt);
@@ -108,7 +118,7 @@ namespace AutoCADPlug
         /// <param name="startAngle">起始角度</param>
         /// <param name="endAngle">终止角度</param>
         /// <returns></returns>
-        public static Ellipse Ellipse(Point3d center, Vector3d majorAxis, double radiusRatio, double startAngle, double endAngle)
+        public static Ellipse CreateEllipse(Point3d center, Vector3d majorAxis, double radiusRatio, double startAngle, double endAngle)
         {
             Plane plane = new Plane();
             Ellipse ellipse = new Ellipse(center, plane.Normal, majorAxis, radiusRatio, startAngle, endAngle);
@@ -121,7 +131,7 @@ namespace AutoCADPlug
         /// <param name="pts">二维点集合</param>
         /// <param name="width">线宽</param>
         /// <returns>二维多段线</returns>
-        public static Polyline Polyline(Point2dCollection pts, double width)
+        public static Polyline CreatePolyline(Point2dCollection pts, double width)
         {
             try
             {
@@ -147,7 +157,7 @@ namespace AutoCADPlug
         /// <param name="rot">文字转角</param>
         /// <param name="isfield">是否是包含域</param>
         /// <returns></returns>
-        public static DBText DBText(string textString, Point3d position, double height, double rot, bool isfield)
+        public static DBText CreateDBText(string textString, Point3d position, double height, double rot, bool isfield)
         {
             DBText txt = new DBText();
             txt.Position = position;
@@ -173,7 +183,7 @@ namespace AutoCADPlug
         /// <param name="rot">文字转角</param>
         /// <param name="isfield">是否是包含域</param>
         /// <returns></returns>
-        public static MText Mtext(string textString, Point3d location, double height, double width, double rot, bool isfield)
+        public static MText CreateMtext(string textString, Point3d location, double height, double width, double rot, bool isfield)
         {
             MText txt = new MText();
             txt.Location = location;
@@ -198,7 +208,7 @@ namespace AutoCADPlug
         /// <param name="pt2">标注点2</param>
         /// <param name="ptText">标注文本定位点</param>
         /// <returns></returns>
-        public static RotatedDimension RotatedDimension(Point3d pt1, Point3d pt2, Point3d ptText)
+        public static RotatedDimension CreateRotatedDimension(Point3d pt1, Point3d pt2, Point3d ptText)
         {
             double angle = new Line(pt1, pt2).Angle;
             Database db = HostApplicationServices.WorkingDatabase;
@@ -216,7 +226,7 @@ namespace AutoCADPlug
         /// <param name="ptText">标注文本定位点</param>
         /// <param name="text">标注替换文本</param>
         /// <returns></returns>
-        public static RotatedDimension RotatedDimension(Point3d pt1, Point3d pt2, Point3d ptText, string text)
+        public static RotatedDimension CreateRotatedDimension(Point3d pt1, Point3d pt2, Point3d ptText, string text)
         {
             double angle = new Line(pt1, pt2).Angle;
             Database db = HostApplicationServices.WorkingDatabase;
@@ -234,7 +244,7 @@ namespace AutoCADPlug
         /// <param name="value">属性值</param>
         /// <param name="pt">属性插入点位置</param>
         /// <returns></returns>
-        public static AttributeDefinition AttributeDefinition(string label, string prompt, string value, Point3d pt)
+        public static AttributeDefinition CreateAttributeDefinition(string label, string prompt, string value, Point3d pt)
         {
             AttributeDefinition ad = new AttributeDefinition();
             ad.Constant = false;
@@ -250,7 +260,7 @@ namespace AutoCADPlug
         /// </summary>
         /// <param name="ad"></param>
         /// <returns></returns>
-        public static AttributeReference AttributeReference(AttributeDefinition ad)
+        public static AttributeReference CreateAttributeReference(AttributeDefinition ad)
         {
             AttributeReference ar = new AttributeReference();
             ar.SetAttributeFromBlock(ad, new Matrix3d());

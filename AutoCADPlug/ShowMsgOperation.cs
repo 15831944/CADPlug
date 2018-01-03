@@ -14,9 +14,13 @@ namespace AutoCADPlug
         /// <param name="message"></param>
         public static void Message(string message)
         {
-            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-            Editor ed = doc.Editor;
-            ed.WriteMessage(message);
+            using (DocumentLock docLock = Application.DocumentManager.MdiActiveDocument.LockDocument())
+            {
+                Document doc = Application.DocumentManager.MdiActiveDocument;
+                Editor ed = doc.Editor;
+                ed.WriteMessage(message);
+            }
+
         }
 
         /// <summary>

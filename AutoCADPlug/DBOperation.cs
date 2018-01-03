@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.ApplicationServices;// (Application, Document)
+
 
 namespace AutoCADPlug
 {
@@ -10,7 +12,7 @@ namespace AutoCADPlug
         /// 当前工作的数据库
         /// </summary>
         /// <returns></returns>
-        public static Database WorkingDataBase()
+        public static Database GetWorkingDataBase()
         {
             return HostApplicationServices.WorkingDatabase;
         }
@@ -19,7 +21,7 @@ namespace AutoCADPlug
         /// 当前活动文档数据库
         /// </summary>
         /// <returns></returns>
-        public static Database DocumentDatabase()
+        public static Database GetDocumentDatabase()
         {
             return Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
         }
@@ -46,7 +48,7 @@ namespace AutoCADPlug
         /// 删除单个对象
         /// </summary>
         /// <param name="obj">要删除对象</param>
-        public static void Remove(DBObject obj)
+        public static void RemoveObj(DBObject obj)
         {
             Database db = obj.Database;
             using (Transaction trans = db.TransactionManager.StartTransaction())
@@ -60,7 +62,7 @@ namespace AutoCADPlug
         /// 删除ObjectId集合中的对象
         /// </summary>
         /// <param name="ids"></param>
-        public static void Remove(ObjectIdCollection ids)
+        public static void RemoveCollection(ObjectIdCollection ids)
         {
             if (ids.Count == 0)
             {
@@ -86,7 +88,7 @@ namespace AutoCADPlug
         /// </summary>
         /// <param name="idCollection">克隆的对象ID集合</param>
         /// <param name="fileName">克隆到的文件名</param>
-        public static void Clone(ObjectIdCollection idCollection, string fileName)
+        public static void CloneDatabase(ObjectIdCollection idCollection, string fileName)
         {
             Database ndb = new Database(true, true);
             ObjectId IdBtr = new ObjectId();
@@ -101,6 +103,73 @@ namespace AutoCADPlug
             }
             db.WblockCloneObjects(idCollection, IdBtr, map, DuplicateRecordCloning.Replace, false);
             ndb.SaveAs(fileName, DwgVersion.Current);
+        }
+
+        /// <summary>
+        /// 将一个实体加入到指定的DataBase的模型空间中
+        /// </summary>
+        /// <param name="entity">实体对象</param>
+        /// <param name="db">数据库</param>
+        /// <returns></returns>
+        public static ObjectId AddToModelSpace(Entity entity, Database db)
+        {
+            ObjectId entityId;
+            using (DocumentLock docLock = Application.DocumentManager.MdiActiveDocument.LockDocument())
+            {
+                using (Transaction trans = db.TransactionManager.StartTransaction())
+                {
+                    BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                    entityId = btr.AppendEntity(entity);
+                    trans.AddNewlyCreatedDBObject(entity, true);
+                    trans.Commit();
+                }
+            }
+            return entityId;
+        }
+
+        /// <summary>
+        /// 将一组实体加入到指定的Database的模型空间
+        /// </summary>
+        /// <param name="entCollection">要添加的对象集合</param>
+        /// <param name="db">数据库</param>
+        /// <returns>加入的对象ObjectId集合</returns>
+        public static ObjectIdCollection AddToModelSpace(DBObjectCollection entCollection)
+        {
+            ObjectIdCollection objIds = new ObjectIdCollection();
+            Database db = GetDocumentDatabase();
+            foreach (DBObject obj in entCollection)
+            {
+                Entity ent = obj as Entity;
+                if (ent != null)
+                {
+                    objIds.Add(AddToModelSpace(ent, db));
+                }
+            }
+            return objIds;
+        }
+
+        public static ObjectIdCollection AddToModelSpace(DBObjectCollection entCollection, Database db)
+        {
+            ObjectIdCollection objIds = new ObjectIdCollection();
+
+            using (DocumentLock doclock = Application.DocumentManager.MdiActiveDocument.LockDocument())
+            {
+                using (Transaction trans = db.TransactionManager.StartTransaction())
+                {
+                    BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                    foreach (DBObject obj in entCollection)
+                    {
+                        Entity entity = obj as Entity;
+
+                        objIds.Add(btr.AppendEntity(entity));
+                        trans.AddNewlyCreatedDBObject(entity, true);
+                    }
+                    trans.Commit();
+                }
+            }
+            return objIds;
         }
 
     }
