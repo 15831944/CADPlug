@@ -111,6 +111,25 @@ namespace AutoCADPlug
         /// <param name="entity">实体对象</param>
         /// <param name="db">数据库</param>
         /// <returns></returns>
+        public static ObjectId AddToModelSpace(Entity entity)
+        {
+            ObjectId entityId;
+            Database db = Application.DocumentManager.MdiActiveDocument.Database;
+
+            using (DocumentLock docLock = Application.DocumentManager.MdiActiveDocument.LockDocument())
+            {
+                using (Transaction trans = db.TransactionManager.StartTransaction())
+                {
+                    BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                    entityId = btr.AppendEntity(entity);
+                    trans.AddNewlyCreatedDBObject(entity, true);
+                    trans.Commit();
+                }
+            }
+            return entityId;
+        }
+
         public static ObjectId AddToModelSpace(Entity entity, Database db)
         {
             ObjectId entityId;
@@ -137,13 +156,22 @@ namespace AutoCADPlug
         public static ObjectIdCollection AddToModelSpace(DBObjectCollection entCollection)
         {
             ObjectIdCollection objIds = new ObjectIdCollection();
-            Database db = GetDocumentDatabase();
-            foreach (DBObject obj in entCollection)
+            Database db = Application.DocumentManager.MdiActiveDocument.Database;
+
+            using (DocumentLock doclock = Application.DocumentManager.MdiActiveDocument.LockDocument())
             {
-                Entity ent = obj as Entity;
-                if (ent != null)
+                using (Transaction trans = db.TransactionManager.StartTransaction())
                 {
-                    objIds.Add(AddToModelSpace(ent, db));
+                    BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                    foreach (DBObject obj in entCollection)
+                    {
+                        Entity entity = obj as Entity;
+
+                        objIds.Add(btr.AppendEntity(entity));
+                        trans.AddNewlyCreatedDBObject(entity, true);
+                    }
+                    trans.Commit();
                 }
             }
             return objIds;

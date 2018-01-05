@@ -30,9 +30,9 @@ namespace AutoCADPlug
 
         public void Initialize()
         {
-            //AddContextMenu();//添加右键菜单
+            AddContextMenu();//添加右键菜单
             AddMenuContent(); //添加菜单栏上项目
-            HelloWorld();
+            CreateCircle();
         }
 
         public void Terminate()
@@ -136,6 +136,7 @@ namespace AutoCADPlug
                 }
             }
         }
+
 
         /// <summary>添加右键菜单项
         /// 
@@ -252,13 +253,16 @@ namespace AutoCADPlug
 
         #endregion
 
-        #region 添加和删除图层
+        #region 添加和删除图层 “PSWCAD”
 
+        /// <summary>
+        /// 新建名为“PSWCAD”的图层
+        /// </summary>
         [CommandMethod("AddLayer")]
         public void AddLayer()
         {
             Database db = HostApplicationServices.WorkingDatabase;
-            AddLayerTableRecord("PSWCAD.org", 1, db);
+            AddLayerTableRecord("PSWCAD", 1, db);
         }
         public ObjectId AddLayerTableRecord(string layerName, short colorIndex, Database db)
         {
@@ -471,16 +475,6 @@ namespace AutoCADPlug
 
         #region something test
 
-
-        [CommandMethod("HelloWorld")]
-        public void HelloWorld()
-        {
-            //这段代码的作用是弹出一个提示
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-            ed.WriteMessage("第一个CAD插件程序！");
-        }
-
-
         public void test1()
         {
             ContextMenuExtension menuExt = new ContextMenuExtension();
@@ -547,8 +541,40 @@ namespace AutoCADPlug
             DBOperation.AddToModelSpace(objs, db);
         }
 
-        #endregion
+        [CommandMethod("ChangeLayer")]
+        public void TestChangeLayer()
+        {
+            //改变圆的图层
+            Entity ent = ChooseObjOperation.ChooseEntity("请选择一个实体：\n");
+            change(ent);
+        }
 
+        /// <summary>
+        /// 改变圆的图层为“PSWCAD”
+        /// </summary>
+        /// <param name="ent"></param>
+        private void change(Entity ent)
+        {
+            Database db = Application.DocumentManager.MdiActiveDocument.Database;
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            using (Transaction transaction = db.TransactionManager.StartTransaction())
+            {
+                Entity en = transaction.GetObject(ent.Id, OpenMode.ForWrite) as Entity;
+                ent.Layer = "PSWCAD";
+                transaction.Commit();
+            }
+        }
+
+        [CommandMethod("CCircle")]
+        public void CreateCircle()
+        {
+            //新建一个圆
+            Point3d pt1 = new Point3d(100, 100, 0);
+            double radius = 100;
+            Circle cc = CreateEntityOperation.CreateCircle(pt1, radius);
+            DBOperation.AddToModelSpace(cc);
+        }
+        #endregion
 
     }
 }

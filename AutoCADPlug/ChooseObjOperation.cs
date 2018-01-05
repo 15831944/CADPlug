@@ -3,6 +3,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
 using System;
+using System.Runtime.InteropServices;
 
 namespace AutoCADPlug
 {
@@ -23,8 +24,8 @@ namespace AutoCADPlug
         /// <returns>实体对象</returns>
         public static Entity ChooseEntity(string message)
         {
-            Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
-            Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
+            Database db = Application.DocumentManager.MdiActiveDocument.Database;
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
             Entity entity = null;
             PromptEntityResult ent = ed.GetEntity(message);
             if (ent.Status == PromptStatus.OK)
@@ -365,6 +366,19 @@ namespace AutoCADPlug
             }
             return EntityCollection;
         }
+
+        /// <summary>
+        /// 将焦点转化到CAD主窗口
+        /// </summary>
+        public static void ChooseCADWindows()
+        {
+            SetFocus(Application.DocumentManager.MdiActiveDocument.Window.Handle);
+        }
+
+
+
+        [DllImport("user32.dll", EntryPoint = "SetFocus")]
+        private static extern int SetFocus(IntPtr hWnd);
 
     }
 }
