@@ -560,6 +560,13 @@ namespace AutoCADPlug
             using (Transaction transaction = db.TransactionManager.StartTransaction())
             {
                 Entity en = transaction.GetObject(ent.Id, OpenMode.ForWrite) as Entity;
+
+                LayerTable lt = transaction.GetObject(db.LayerTableId, OpenMode.ForRead) as LayerTable;
+                LayerTableRecord ltr = transaction.GetObject(db.Clayer, OpenMode.ForRead) as LayerTableRecord;
+                if (!lt.Has("PSWCAD")){
+                    ShowMsgOperation.Alert("没有PSWCAD图层！");
+                    return;
+                }
                 ent.Layer = "PSWCAD";
                 transaction.Commit();
             }
