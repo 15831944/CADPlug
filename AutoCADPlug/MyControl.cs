@@ -8,7 +8,6 @@ using Autodesk.AutoCAD.DatabaseServices;// (Database, DBPoint, Line, Spline)
 using Autodesk.AutoCAD.Geometry;//(Point3d, Line3d, Curve3d)
 using Autodesk.AutoCAD.Runtime;// (CommandMethodAttribute, RXObject, CommandFlag)
 using Autodesk.AutoCAD.Colors;
-using Autodesk.AutoCAD.GraphicsInterface;
 using Autodesk.AutoCAD.LayerManager;
 
 //acmgd
@@ -51,7 +50,8 @@ namespace AutoCADPlug
 
                 //将矩形添加到数据库中
                 Database db = DBOperation.GetDocumentDatabase();
-                DBOperation.AddToModelSpace(rect.CreateRect(), db);
+                //DBOperation.AddToModelSpace(rect.CreateRect(), db);
+                DBOperation.AddToModelSpace(CreatePolyLineOfRectangle(), db);
 
             }
             catch (Autodesk.AutoCAD.Runtime.Exception ex)
@@ -83,7 +83,7 @@ namespace AutoCADPlug
             if (pt.Status == PromptStatus.OK)
             {
                 bPoint = (Point3d)pt.Value;
-                ShowMsgOperation.Message("您选择了点："+bPoint.X+","+bPoint.Y+"\n");
+                ShowMsgOperation.Message("您选择了点：" + bPoint.X + "," + bPoint.Y + "\n");
             }
             else
             {
@@ -93,7 +93,27 @@ namespace AutoCADPlug
             this.Focus();
         }
 
+        private Polyline CreatePolyLineOfRectangle()
+        {
+            double height = Convert.ToDouble(nudBeamHeight.Value);
+            double width = Convert.ToDouble(nudBeamTopHeight.Value);
+            Point2dCollection ptCol = new Point2dCollection();
+            ptCol.Add(new Point2d(bPoint.X, bPoint.Y));
+            ptCol.Add(new Point2d(bPoint.X, bPoint.Y + height));
+            ptCol.Add(new Point2d(bPoint.X + width, bPoint.Y + height));
+            ptCol.Add(new Point2d(bPoint.X + width, bPoint.Y));
 
+            Polyline pl = new Polyline();
+
+            for (int i = 0; i < ptCol.Count; i++)
+            {
+                pl.AddVertexAt(i, ptCol[i], 0, 0, 0);
+            }
+            pl.Closed = true;
+
+            return pl;
+
+        }
 
     }
 }

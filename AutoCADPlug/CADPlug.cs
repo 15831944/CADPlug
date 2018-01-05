@@ -87,11 +87,15 @@ namespace AutoCADPlug
         {
             if (ps != null)
             {
+                if (!ps.Visible)
+                {
+                    ps.Visible = true;
+                }
                 return;
             }
 
             MyControl contr = new MyControl();
-            ps = new PaletteSet("PaletteSet");
+            ps = new PaletteSet("插件操作面板");
 
 
             ps.Visible = true;
