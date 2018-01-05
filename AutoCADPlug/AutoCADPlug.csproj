@@ -100,7 +100,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CADPlug.cs" />
-    <Compile Include="ChooseObjOperation.cs" />
+    <Compile Include="SelectObjOperation.cs" />
     <Compile Include="CreateEntityOperation.cs" />
     <Compile Include="DataFileOperation.cs" />
     <Compile Include="DBOperation.cs" />

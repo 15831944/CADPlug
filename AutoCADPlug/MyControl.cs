@@ -78,7 +78,7 @@ namespace AutoCADPlug
         private void button3_Click(object sender, EventArgs e)
         {
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
-            ChooseObjOperation.ChooseCADWindows();
+            SelectObjOperation.SelectCADWindows();
             PromptPointResult pt = ed.GetPoint("\n请选择点");
             if (pt.Status == PromptStatus.OK)
             {

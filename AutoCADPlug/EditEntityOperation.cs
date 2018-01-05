@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.EditorInput;
 
 namespace AutoCADPlug
 {
@@ -153,7 +155,46 @@ namespace AutoCADPlug
             return ents;
         }
 
-
+        /// <summary>
+        /// 提示用户选择实体，改变选择的所选实体的颜色
+        /// </summary>
+        /// <param name="colorIndex">需要变成的颜色</param>
+        public static void ChangeEntityColor(int colorIndex)
+        {
+            //获取当前文档和数据库
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            //启动事务
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                //请求在图形区域选择对象
+                PromptSelectionResult psr = doc.Editor.GetSelection();
+                //如果提示状态OK，表示已选择对象
+                if (psr.Status == PromptStatus.OK)
+                {
+                    SelectionSet ss = psr.Value;
+                    //遍历选择集内的对象
+                    foreach (SelectedObject sobj in ss)
+                    {
+                        //确认返回的是合法的SelectedObject对象
+                        if (sobj != null)
+                        {
+                            //以写打开所选对象
+                            Entity ent = trans.GetObject(sobj.ObjectId,
+                            OpenMode.ForWrite) as Entity;
+                            if (ent != null)
+                            {
+                                //将对象颜色修改为绿色，绿色：3
+                                ent.ColorIndex = colorIndex;
+                            }
+                        }
+                    }
+                    //保存新对象到数据库
+                    trans.Commit();
+                }
+                //关闭事务
+            }
+        }
 
     }
 

@@ -228,5 +228,33 @@ namespace AutoCADPlug
             return ids;
         }
 
+        /// <summary>
+        /// 改变当前图层为指定的图层
+        /// </summary>
+        /// <param name="layerName">指定的图层名</param>
+        public static void SetCurrentLayer(string layerName)
+        {
+            //获取当前文档和数据库
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            //启动事务
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                //以读模式打开图层表
+                LayerTable lt;
+                lt = trans.GetObject(db.LayerTableId, OpenMode.ForRead) as LayerTable;
+                string sLayerName = layerName;
+                if (lt.Has(sLayerName) == true)
+                {
+                    //Set the layer Center current
+                    db.Clayer = lt[sLayerName];
+                    //保存修改
+                    trans.Commit();
+                }
+                //关闭事务
+            }
+        }
+
+
     }
 }

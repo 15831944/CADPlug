@@ -545,7 +545,7 @@ namespace AutoCADPlug
         public void TestChangeLayer()
         {
             //改变圆的图层
-            Entity ent = ChooseObjOperation.ChooseEntity("请选择一个实体：\n");
+            Entity ent = SelectObjOperation.SelectEntity("请选择一个实体：\n");
             change(ent);
         }
 
@@ -575,11 +575,13 @@ namespace AutoCADPlug
         [CommandMethod("CCircle")]
         public void CreateCircle()
         {
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
             //新建一个圆
             Point3d pt1 = new Point3d(100, 100, 0);
             double radius = 100;
             Circle cc = CreateEntityOperation.CreateCircle(pt1, radius);
             DBOperation.AddToModelSpace(cc);
+            ed.UpdateScreen();
         }
         #endregion
 

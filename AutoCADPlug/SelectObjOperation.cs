@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace AutoCADPlug
 {
-    public  class ChooseObjOperation
+    public  class SelectObjOperation
     {
         /// <summary>
         /// 类型过滤枚举类
@@ -22,7 +22,7 @@ namespace AutoCADPlug
         /// </summary>
         /// <param name="message">选择提示</param>
         /// <returns>实体对象</returns>
-        public static Entity ChooseEntity(string message)
+        public static Entity SelectEntity(string message)
         {
             Database db = Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
@@ -48,7 +48,7 @@ namespace AutoCADPlug
         /// <param name="tp">过滤类型</param>
         /// <param name="bo">true表示不包括其基类，false则表示包括其基类</param>
         /// <returns></returns>
-        public static Entity ChooseEntity(string optionsWord, string optionsMessage, string word, Type tp, bool bo)
+        public static Entity SelectEntity(string optionsWord, string optionsMessage, string word, Type tp, bool bo)
         {
             Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
@@ -72,7 +72,7 @@ namespace AutoCADPlug
         /// 选择集合
         /// </summary>
         /// <returns></returns>
-        public static DBObjectCollection ChooseCollection()
+        public static DBObjectCollection SelectCollection()
         {
             Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
@@ -101,7 +101,7 @@ namespace AutoCADPlug
         /// </summary>
         /// <param name="tps">过滤类型</param>
         /// <returns>ObjectId数组</returns>
-        public static DBObjectCollection ChooseCollection(FilterType[] tps)
+        public static DBObjectCollection SelectCollection(FilterType[] tps)
         {
             Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
@@ -141,7 +141,7 @@ namespace AutoCADPlug
         /// 选择所有对象
         /// </summary>
         /// <returns></returns>
-        public static DBObjectCollection ChooseAll()
+        public static DBObjectCollection SelectAll()
         {
             Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
@@ -169,7 +169,7 @@ namespace AutoCADPlug
         /// 过滤选择所有对象
         /// </summary>
         /// <returns></returns>
-        public static DBObjectCollection ChooseAll(FilterType[] tps)
+        public static DBObjectCollection SelectAll(FilterType[] tps)
         {
             Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
@@ -207,7 +207,7 @@ namespace AutoCADPlug
         /// </summary>
         /// <param name="pc">多边形顶点</param>
         /// <returns></returns>
-        public static DBObjectCollection ChooseCrossingPolygon(Point3dCollection pc)
+        public static DBObjectCollection SelectCrossingPolygon(Point3dCollection pc)
         {
             Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
@@ -236,7 +236,7 @@ namespace AutoCADPlug
         /// <param name="pc">多边形顶点</param>
         /// <param name="tps">类型过滤集合</param>
         /// <returns></returns>
-        public static DBObjectCollection ChooseCrossingPolygon(Point3dCollection pc, FilterType[] tps)
+        public static DBObjectCollection SelectCrossingPolygon(Point3dCollection pc, FilterType[] tps)
         {
             Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
@@ -275,7 +275,7 @@ namespace AutoCADPlug
         /// <param name="pt1">窗口角点1</param>
         /// <param name="pt2">窗口角点2</param>
         /// <returns></returns>
-        public static DBObjectCollection ChooseCrossingWindow(Point3d pt1, Point3d pt2)
+        public static DBObjectCollection SelectCrossingWindow(Point3d pt1, Point3d pt2)
         {
             Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
@@ -306,7 +306,7 @@ namespace AutoCADPlug
         /// <param name="pt2">窗口角点2</param>
         /// <param name="tps">类型过滤集合</param>
         /// <returns></returns>
-        public static DBObjectCollection ChooseCrossingWindow(Point3d pt1, Point3d pt2, FilterType[] tps)
+        public static DBObjectCollection SelectCrossingWindow(Point3d pt1, Point3d pt2, FilterType[] tps)
         {
             Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
@@ -343,7 +343,7 @@ namespace AutoCADPlug
         /// 选择所有隐藏对象
         /// </summary>
         /// <returns></returns>
-        public static DBObjectCollection ChooseImplied()
+        public static DBObjectCollection SelectImplied()
         {
             Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
@@ -370,7 +370,7 @@ namespace AutoCADPlug
         /// <summary>
         /// 将焦点转化到CAD主窗口
         /// </summary>
-        public static void ChooseCADWindows()
+        public static void SelectCADWindows()
         {
             SetFocus(Application.DocumentManager.MdiActiveDocument.Window.Handle);
         }
