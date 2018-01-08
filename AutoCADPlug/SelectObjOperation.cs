@@ -14,7 +14,7 @@ namespace AutoCADPlug
         /// </summary>
         public enum FilterType
         {
-            Curve, Dimension, Polyline, BlockRef, Circle, Line, Arc, Text, Mtext, Polyline3d
+            Curve, Dimension, Polyline, BlockRef, Circle, Line, Arc, Text, Mtext, Polyline3d, LWPOLYLINE
         }
 
         /// <summary>
@@ -212,7 +212,8 @@ namespace AutoCADPlug
             Database db = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
             Entity entity = null;
-            DBObjectCollection EntityCollection = new DBObjectCollection(); PromptSelectionResult ents = ed.SelectCrossingPolygon(pc);
+            DBObjectCollection EntityCollection = new DBObjectCollection();
+            PromptSelectionResult ents = ed.SelectCrossingPolygon(pc);
             if (ents.Status == PromptStatus.OK)
             {
                 using (Transaction transaction = db.TransactionManager.StartTransaction())
@@ -374,6 +375,61 @@ namespace AutoCADPlug
         {
             SetFocus(Application.DocumentManager.MdiActiveDocument.Window.Handle);
         }
+
+        /// <summary>
+        /// 通过XData，过滤包含字符串的实体
+        /// </summary>
+        /// <param name="data"></param>
+        public static ObjectIdCollection SelectXdataObj(string data)
+        {
+            ObjectIdCollection objIds = new ObjectIdCollection();
+
+            //获取当前文档编辑器
+            Editor editor = Application.DocumentManager.MdiActiveDocument.Editor;
+            //创建 TypedValue 数组，定义过滤条件
+            TypedValue[] tValue = new TypedValue[2];
+            tValue.SetValue(new TypedValue((int)DxfCode.Start, "Circle"), 0);
+            tValue.SetValue(new TypedValue((int)DxfCode.ExtendedDataAsciiString,
+            data), 1);
+            //将过滤条件赋给 SelectionFilter 对象
+            SelectionFilter sFilter = new SelectionFilter(tValue);
+            //请求在图形区域选择对象
+            PromptSelectionResult psr;
+            psr = editor.GetSelection(sFilter);
+            //如果提示状态 OK，说明已选对象
+            if (psr.Status == PromptStatus.OK)
+            {
+                SelectionSet ss = psr.Value;
+                Application.ShowAlertDialog("Number of objects selected: " +
+                ss.Count.ToString());
+
+                foreach (ObjectId id in ss.GetObjectIds())
+                {
+                    objIds.Add(id);
+                }
+            }
+            else
+            {
+                Application.ShowAlertDialog("Number of objects selected: 0");
+            }
+
+            return objIds;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -3,7 +3,7 @@ using Autodesk.AutoCAD.DatabaseServices;// (Database, DBPoint, Line, Spline)
 using Autodesk.AutoCAD.Geometry;//(Point3d, Line3d, Curve3d)
 using Autodesk.AutoCAD.Runtime;// (CommandMethodAttribute, RXObject, CommandFlag)
 using Autodesk.AutoCAD.Colors;
-using Autodesk.AutoCAD.GraphicsInterface;
+//using Autodesk.AutoCAD.GraphicsInterface;
 using Autodesk.AutoCAD.LayerManager;
 
 //acmgd
@@ -30,9 +30,10 @@ namespace AutoCADPlug
 
         public void Initialize()
         {
-            AddContextMenu();//添加右键菜单
+            //AddContextMenu();//添加右键菜单
             AddMenuContent(); //添加菜单栏上项目
             CreateCircle();
+            CreateRectangle();
         }
 
         public void Terminate()
@@ -52,13 +53,13 @@ namespace AutoCADPlug
                 //添加根菜单
                 AcadPopupMenu pMenu = acadApp.MenuGroups.Item(0).Menus.Add("psw二次开发");
 
-                //添加子菜单项,多级
-                AcadPopupMenu cMenu = pMenu.AddSubMenu(pMenu.Count + 1, "液压插件");
-                AcadPopupMenuItem cMenuItem0 = cMenu.AddMenuItem(cMenu.Count + 1, "插件1", "hydrPlugin1\n");
-                AcadPopupMenuItem cMenuItem1 = cMenu.AddMenuItem(cMenu.Count + 1, "插件2", "hydrPlugin2\n");
-                AcadPopupMenuItem cMenuItem2 = cMenu.AddMenuItem(cMenu.Count + 1, "插件3", "hydrPlugin3\n");
+                ////添加子菜单项,多级
+                //AcadPopupMenu cMenu = pMenu.AddSubMenu(pMenu.Count + 1, "液压插件");
+                //AcadPopupMenuItem cMenuItem0 = cMenu.AddMenuItem(cMenu.Count + 1, "插件1", "hydrPlugin1\n");
+                //AcadPopupMenuItem cMenuItem1 = cMenu.AddMenuItem(cMenu.Count + 1, "插件2", "hydrPlugin2\n");
+                //AcadPopupMenuItem cMenuItem2 = cMenu.AddMenuItem(cMenu.Count + 1, "插件3", "hydrPlugin3\n");
                 //添加分隔条
-                pMenu.AddSeparator(pMenu.Count + 1);
+                //pMenu.AddSeparator(pMenu.Count + 1);
                 //添加子菜单项，单级
                 AcadPopupMenuItem cMenu2 = pMenu.AddMenuItem(pMenu.Count + 1, "建筑插件", "architecturePlugin\n");
                 pMenu.InsertInMenuBar(acadApp.MenuBar.Count + 1);
@@ -81,8 +82,8 @@ namespace AutoCADPlug
 
         #region 添加自定义面板
 
-        [CommandMethod("AddPalette")]
-        [CommandMethod("architecturePlugin")]
+        //[CommandMethod("AddPalette")]
+        //[CommandMethod("architecturePlugin")]
         public void AddPalette()
         {
             if (ps != null)
@@ -170,6 +171,7 @@ namespace AutoCADPlug
 
         #region 用户交互：自定义用户界面
 
+        [CommandMethod("architecturePlugin")]
         [CommandMethod("ShowModalDialog")]
         public void ShowModalDialog()
         {
@@ -179,7 +181,9 @@ namespace AutoCADPlug
                 Application.ShowModalDialog(form);
                 if (form.DialogResult == System.Windows.Forms.DialogResult.OK)
                 {
-                    Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage("\n" + form.Name);
+                    //Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage("\n" + form.Name);
+                    AddPalette();
+
                 }
             }
         }
@@ -473,8 +477,79 @@ namespace AutoCADPlug
 
         #endregion
 
+        #region  扩展数据，用DataTable
+
+        [CommandMethod("WriteData")]
+        public void AddData()
+        {
+            DataTable dt = new DataTable();
+            dt.TableName = "ParameterTable";
+            dt.AppendColumn(CellType.CharPtr, "Name");
+            dt.AppendColumn(CellType.CharPtr, "Meterial");
+            dt.AppendColumn(CellType.CharPtr, "Parameter");
+            DataCellCollection Row = new DataCellCollection();
+            DataCell Name = new DataCell();
+            DataCell Meterial = new DataCell();
+            DataCell Parameter = new DataCell();
+            Name.SetString("工字钢");
+            Meterial.SetString("Q235B");
+            Parameter.SetString("200*200*32*25");
+            Row.Add(Name);
+            Row.Add(Meterial);
+            Row.Add(Parameter);
+            dt.AppendRow(Row, true);
+            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            Editor ed = doc.Editor;
+            PromptEntityResult ent = ed.GetEntity("\n选择要写数据的对象");
+            if (ent.Status == PromptStatus.OK)
+            {
+                using (Transaction tr = db.TransactionManager.StartTransaction())
+                {
+                    Entity entity = (Entity)tr.GetObject(ent.ObjectId, OpenMode.ForWrite, true);
+                    if (entity.ExtensionDictionary == new ObjectId())
+                        entity.CreateExtensionDictionary();
+                    DBDictionary extensionDic = (DBDictionary)tr.GetObject(entity.ExtensionDictionary,
+                    OpenMode.ForWrite, false);
+                    extensionDic.SetAt("ParameterTable", dt);
+                    tr.Commit();
+                }
+            }
+        }
+
+        [CommandMethod("ReadData")]
+        public void ReadData()
+        {
+            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            Editor ed = doc.Editor;
+            Entity entity = null;
+            PromptEntityResult ent = ed.GetEntity("\n选择要读取数据的对象");
+            if (ent.Status == PromptStatus.OK)
+            {
+                using (Transaction transaction = db.TransactionManager.StartTransaction())
+                {
+                    entity = (Entity)transaction.GetObject(ent.ObjectId, OpenMode.ForRead, true);
+                    DBDictionary extensionDic = transaction.GetObject(entity.ExtensionDictionary, OpenMode.ForRead)
+                    as DBDictionary;
+                    DataTable dt = transaction.GetObject(extensionDic.GetAt("ParameterTable"), OpenMode.ForRead)
+                    as DataTable;
+                    string name = dt.GetCellAt(0, 0).Value.ToString();
+                    string material = dt.GetCellAt(0, 1).Value.ToString();
+                    string param = dt.GetCellAt(0, 2).Value.ToString();
+                    ed.WriteMessage("\n Name:" + name);
+                    ed.WriteMessage("\n Meterial:" + material);
+                    ed.WriteMessage("\n Parameter:" + param);
+                    transaction.Commit();
+                }
+            }
+        }
+
+        #endregion
+
         #region something test
 
+        #region 测试命令
         public void test1()
         {
             ContextMenuExtension menuExt = new ContextMenuExtension();
@@ -540,6 +615,9 @@ namespace AutoCADPlug
             //DBOperation.AddToModelSpace(objs);
             DBOperation.AddToModelSpace(objs, db);
         }
+        #endregion
+
+        #region 测试改变图层
 
         [CommandMethod("ChangeLayer")]
         public void TestChangeLayer()
@@ -563,7 +641,8 @@ namespace AutoCADPlug
 
                 LayerTable lt = transaction.GetObject(db.LayerTableId, OpenMode.ForRead) as LayerTable;
                 LayerTableRecord ltr = transaction.GetObject(db.Clayer, OpenMode.ForRead) as LayerTableRecord;
-                if (!lt.Has("PSWCAD")){
+                if (!lt.Has("PSWCAD"))
+                {
                     ShowMsgOperation.Alert("没有PSWCAD图层！");
                     return;
                 }
@@ -572,18 +651,258 @@ namespace AutoCADPlug
             }
         }
 
+        #endregion
+
+        #region 测试添加实体
         [CommandMethod("CCircle")]
         public void CreateCircle()
         {
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
             //新建一个圆
-            Point3d pt1 = new Point3d(100, 100, 0);
-            double radius = 100;
-            Circle cc = CreateEntityOperation.CreateCircle(pt1, radius);
-            DBOperation.AddToModelSpace(cc);
+            int count = 5;
+            while (count-- > 1)
+            {
+                Point3d pt1 = new Point3d(10 + 100 * count, 10 + 100 * count, 0);
+                double radius = 10 * count;
+
+                Circle cc = CreateEntityOperation.CreateCircle(pt1, radius);
+                DBOperation.AddToModelSpace(cc);
+            }
+            ed.UpdateScreen();
+
+        }
+
+        private void CreateRectangle()
+        {
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            //新建矩形
+            int count = 5;
+            while (count-- > 1)
+            {
+                Point2d bPoint = new Point2d(-100 * count, 100 * count);
+                double height = 20;
+                double width = 10;
+                Point2dCollection ptCol = new Point2dCollection();
+                ptCol.Add(new Point2d(bPoint.X, bPoint.Y));
+                ptCol.Add(new Point2d(bPoint.X, bPoint.Y + height));
+                ptCol.Add(new Point2d(bPoint.X + width, bPoint.Y + height));
+                ptCol.Add(new Point2d(bPoint.X + width, bPoint.Y));
+
+                Polyline pl = new Polyline();
+
+                for (int i = 0; i < ptCol.Count; i++)
+                {
+                    pl.AddVertexAt(i, ptCol[i], 0, 0, 0);
+                }
+
+                pl.Closed = true;
+                DBOperation.AddToModelSpace(pl);
+            }
             ed.UpdateScreen();
         }
+
         #endregion
+
+        #region 测试选择实体
+
+        [CommandMethod("TestGetSelection")]
+        public void TestGetSelection()
+        {
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            PromptSelectionOptions pso = new PromptSelectionOptions();
+            pso.MessageForAdding = "请选择实体集：：：";
+            PromptSelectionResult psr = ed.GetSelection(pso);
+            if (psr.Status == PromptStatus.OK)
+            {
+                SelectionSet ss = psr.Value;
+                int count = ss.Count;
+                ed.WriteMessage("选择了{0}个实体", count);
+            }
+        }
+
+        [CommandMethod("TestSelectRectangle")]
+        public void TestSelectRectangle()
+        {
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            SelectObjOperation.FilterType[] filter = new SelectObjOperation.FilterType[1];
+            filter[0] = SelectObjOperation.FilterType.LWPOLYLINE;
+            ed.WriteMessage(SelectObjOperation.SelectAll(filter).Count.ToString());
+        }
+
+        [CommandMethod("TestSelectFilterXdata")]
+        public void TestSelectFilterXdata()
+        {
+            //获取当前文档编辑器
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            TypedValue[] tValue = new TypedValue[2];
+            //tValue.SetValue(new TypedValue((int)DxfCode.Start, "circle"), 0);
+            tValue.SetValue(new TypedValue((int)DxfCode.Start, "LWPOLYLINE"), 0);
+            //tValue.SetValue(new TypedValue((int)DxfCode.ExtendedDataRegAppName, "psw"), 1);
+            tValue.SetValue(new TypedValue((int)DxfCode.ExtendedDataReal, 20.00), 1);
+            //将过滤条件赋给 SelectionFilter 对象
+            SelectionFilter sFilter = new SelectionFilter(tValue);
+            //请求在图形区域选择对象
+            PromptSelectionResult psr;
+            psr = ed.SelectAll(sFilter);
+            ObjectIdCollection objCollection = new ObjectIdCollection();
+            //如果提示状态 OK，说明已选对象
+            if (psr.Status == PromptStatus.OK)
+            {
+                SelectionSet ss = psr.Value;
+                Application.ShowAlertDialog("Number of objects selected: " +
+                ss.Count.ToString());
+
+            }
+            else
+            {
+                ed.WriteMessage("已选择0000个对象");
+            }
+            //return objCollection;
+        }
+
+        [CommandMethod("TestAddEntityXdata")]
+        public void TestAddEntityXdata()
+        {
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            ed.WriteMessage("添加扩展数据XDATA\n");
+            PromptSelectionOptions pso = new PromptSelectionOptions();
+            pso.MessageForAdding = "请选择实体集\n";
+            PromptSelectionResult psr = ed.GetSelection(pso);
+            if (psr.Status != PromptStatus.OK)
+            {
+                ed.WriteMessage("选择对象失败，退出");
+                return;
+            }
+            SelectionSet ss = psr.Value;
+            int count = ss.Count;
+            ed.WriteMessage("选择了{0}个实体", count);
+
+            Database db = HostApplicationServices.WorkingDatabase;
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                RegAppTable appTable = trans.GetObject(db.RegAppTableId, OpenMode.ForWrite) as RegAppTable;
+                if (!appTable.Has("psw"))
+                {
+                    RegAppTableRecord appTableRec = new RegAppTableRecord();
+                    appTableRec.Name = "psw";
+                    appTable.Add(appTableRec);
+                    trans.AddNewlyCreatedDBObject(appTableRec, true);
+                }
+                foreach (ObjectId id in ss.GetObjectIds())
+                {
+                    using (Entity ent = trans.GetObject(id, OpenMode.ForWrite) as Entity)
+                    {
+                        ent.ColorIndex = 1;
+                        ResultBuffer rBuffer = new ResultBuffer(
+                            new TypedValue((int)DxfCode.ExtendedDataRegAppName, "psw"),
+                            new TypedValue((int)DxfCode.ExtendedDataReal, 20.00)
+                            );
+                        ent.XData = rBuffer;
+                    }
+                }
+                trans.Commit();
+            }
+
+        }
+
+        [CommandMethod("TestPolyLine")]
+        public void TestPolyLine()
+        {
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            PromptSelectionOptions pso = new PromptSelectionOptions();
+            pso.MessageForAdding = "请选择实体集：：：";
+            PromptSelectionResult psr = ed.GetSelection(pso);
+            if (psr.Status == PromptStatus.OK)
+            {
+                SelectionSet ss = psr.Value;
+                int count = ss.Count;
+                ed.WriteMessage("选择了{0}个实体\n", count);
+
+
+                Database db = HostApplicationServices.WorkingDatabase;
+                using (Transaction trans = db.TransactionManager.StartTransaction())
+                {
+                    foreach (ObjectId id in ss.GetObjectIds())
+                    {
+                        using (Polyline pline = trans.GetObject(id, OpenMode.ForWrite) as Polyline)
+                        {
+                            Point2d pt;
+                            for (int i = 0; i < pline.NumberOfVertices; i++)
+                            {
+                                pt = pline.GetPoint2dAt(i);
+                                ed.WriteMessage(pt.X.ToString() + "," + pt.Y.ToString() + "\n");
+                            }
+                        }
+                    }
+                    trans.Commit();
+                }
+
+            }
+        }
+
+        [CommandMethod("TestIntersectWith")]
+        public void TestIntersectWith()
+        {
+            //获取当前文档编辑器
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            TypedValue[] tValue = new TypedValue[2];
+            tValue.SetValue(new TypedValue((int)DxfCode.Start, "LWPOLYLINE"), 0);
+            tValue.SetValue(new TypedValue((int)DxfCode.ExtendedDataReal, 20.00), 1);
+            //将过滤条件赋给 SelectionFilter 对象
+            SelectionFilter sFilter = new SelectionFilter(tValue);
+            //请求在图形区域选择对象
+            PromptSelectionResult psr = ed.SelectAll(sFilter);
+            ObjectIdCollection objCollection = new ObjectIdCollection();
+            //如果提示状态 OK，说明已选对象
+            if (psr.Status == PromptStatus.OK)
+            {
+                SelectionSet ss = psr.Value;
+                Application.ShowAlertDialog("Number of objects selected: " +
+                ss.Count.ToString());
+
+                PromptEntityResult per = ed.GetEntity("请选择直线实体");
+                ObjectId lineId;
+                if (per.Status != PromptStatus.OK)
+                {
+                    return;
+                }
+                lineId = per.ObjectId;
+                int count = 1;
+                Database db = HostApplicationServices.WorkingDatabase;
+                using (Transaction trans = db.TransactionManager.StartTransaction())
+                {
+                    using (Line lineEntity = trans.GetObject(lineId, OpenMode.ForRead) as Line)
+                    {
+                        foreach (ObjectId id in ss.GetObjectIds())
+                        {
+                            using (Polyline pline = trans.GetObject(id, OpenMode.ForRead) as Polyline)
+                            {
+                                Point3dCollection pt3d = new Point3dCollection();
+                                lineEntity.IntersectWith(pline, Intersect.OnBothOperands,new Plane(),pt3d,IntPtr.Zero,IntPtr.Zero);
+                                if (pt3d.Count > 0)
+                                {
+                                    ed.WriteMessage("与多段线"+count+":"+id+ "有交点\n");
+                                }
+                                else
+                                    ed.WriteMessage("与多段线" + count + ":"+id+"没有交点\n");
+
+                            }
+                            count++;
+                        }
+                    }
+                    trans.Commit();
+                }
+
+            }
+            else
+            {
+                ed.WriteMessage("已选择0000个对象");
+            }
+        }
+        #endregion
+
+        #endregion
+
 
     }
 }
