@@ -18,7 +18,7 @@ using Autodesk.AutoCAD.Windows.ToolPalette;
 using Autodesk.AutoCAD.Interop;
 using System;
 using System.Reflection;
-
+using System.IO;
 
 [assembly: CommandClass(typeof(AutoCADPlug.CAD))]
 namespace AutoCADPlug
@@ -32,8 +32,8 @@ namespace AutoCADPlug
         {
             //AddContextMenu();//添加右键菜单
             AddMenuContent(); //添加菜单栏上项目
-            CreateCircle();
-            CreateRectangle();
+            //CreateCircle();
+            //CreateRectangle();
         }
 
         public void Terminate()
@@ -878,13 +878,13 @@ namespace AutoCADPlug
                             using (Polyline pline = trans.GetObject(id, OpenMode.ForRead) as Polyline)
                             {
                                 Point3dCollection pt3d = new Point3dCollection();
-                                lineEntity.IntersectWith(pline, Intersect.OnBothOperands,new Plane(),pt3d,IntPtr.Zero,IntPtr.Zero);
+                                lineEntity.IntersectWith(pline, Intersect.OnBothOperands, new Plane(), pt3d, IntPtr.Zero, IntPtr.Zero);
                                 if (pt3d.Count > 0)
                                 {
-                                    ed.WriteMessage("与多段线"+count+":"+id+ "有交点\n");
+                                    ed.WriteMessage("与多段线" + count + ":" + id + "有交点\n");
                                 }
                                 else
-                                    ed.WriteMessage("与多段线" + count + ":"+id+"没有交点\n");
+                                    ed.WriteMessage("与多段线" + count + ":" + id + "没有交点\n");
 
                             }
                             count++;
@@ -899,6 +899,187 @@ namespace AutoCADPlug
                 ed.WriteMessage("已选择0000个对象");
             }
         }
+        #endregion
+
+        #region 测试添加文字
+
+
+        #endregion
+
+        #region 测试添加块引用
+      
+        #endregion
+
+        #region 测试生成.dwg文件
+
+        [CommandMethod("TestReadDwgFile")]
+        public void TestReadDwgFile()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            using (Database db = new Database(false, true))
+            {
+                try
+                {
+                    string dwgFileFullPath = @"‪C:\Users\admin\Desktop\psw.dwg";
+                    db.ReadDwgFile(dwgFileFullPath, FileShare.Read, false, "");
+                    db.CloseInput(true);
+                }
+                catch (System.Exception ex)
+                {
+                    doc.Editor.WriteMessage("打开文件失败" + "\n" + ex.Message
+                        + "\n" + ex.Source
+                        + "\n" + ex.ToString()
+                        + "\n" + ex.StackTrace);
+                    return;
+                }
+            }
+        }
+
+        [CommandMethod("ReadDwgFileTest")]
+        public static void ReadDwgFileTest()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+
+            using (Database db = new Database(false, false))
+            {
+                try
+                {
+                    // 读取dwg文件
+                    const string filename = "psw.dwg";
+                    string dwgFileFullPath = HostApplicationServices.Current.FindFile(filename, db, FindFileHint.Default);
+                    db.ReadDwgFile(dwgFileFullPath,
+                        FileOpenMode.OpenForReadAndAllShare, false, null);
+                    db.CloseInput(true);
+                }
+                catch (System.Exception ex)
+                {
+                    doc.Editor.WriteMessage("\nUnable to read drawing file.");
+                    return;
+                }
+
+                using (Transaction tr = db.TransactionManager.StartTransaction())
+                {
+                    // 模型空间
+                    BlockTable blkTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead)
+                        as BlockTable;
+                    BlockTableRecord modelSpace = tr.GetObject(
+                        blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForRead)
+                        as BlockTableRecord;
+
+                    // 遍历模型空间
+                    foreach (ObjectId oid in modelSpace)
+                    {
+                        DBObject dbobj = tr.GetObject(oid, OpenMode.ForRead);
+                        if (dbobj is Entity)
+                        {
+                            Entity entity = dbobj as Entity;
+                            doc.Editor.WriteMessage("\nEntity: {0}, {1}, {2}, {3}",
+                                entity.Id,
+                                entity.GetType().ToString(),
+                                entity.Layer,
+                                entity.Color.ToString());
+                        }
+                    }
+                }
+            }
+        }
+
+        private static string filepath = @"‪E:\Drawing1.dwg";
+
+        [CommandMethod("modifyDWG")]
+        public void addTextToDWG()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Editor ed = doc.Editor;
+            Database workingDB = HostApplicationServices.WorkingDatabase;
+            Database db = new Database(false, true);
+
+            try
+            {
+                db.ReadDwgFile(filepath, System.IO.FileShare.ReadWrite, false, "");
+                db.CloseInput(true);
+                HostApplicationServices.WorkingDatabase = db;
+            }
+            catch (Autodesk.AutoCAD.Runtime.Exception e)
+            {
+                ed.WriteMessage("\nUnable to open .dwg file : " + e.StackTrace);
+                return;
+            }
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable bt = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord btr = tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                MText objText = new MText();
+                objText.SetDatabaseDefaults();
+                objText.Location = new Autodesk.AutoCAD.Geometry.Point3d(2, 2, 0);
+                objText.Contents = "added text in a closed .dwg file!";
+                objText.TextStyleId = db.Textstyle;
+                btr.AppendEntity(objText);
+                tr.AddNewlyCreatedDBObject(objText, true);
+                tr.Commit();
+            }
+            HostApplicationServices.WorkingDatabase = workingDB;
+            db.SaveAs(filepath, DwgVersion.Current);
+        }
+
+        #endregion
+
+
+        #region 测试从外部文件中读取块到当前数据库文件中
+
+        [CommandMethod("ImportBlocks")]
+        public void ImportBlocks()
+        {
+            DocumentCollection dm =
+            Application.DocumentManager;
+            Editor ed = dm.MdiActiveDocument.Editor;
+            Database destDb = dm.MdiActiveDocument.Database;
+            Database sourceDb = new Database(false, true);
+            try
+            {
+                const string filename = "psw.dwg";
+                string dwgFileFullPath = HostApplicationServices.Current.FindFile(filename, destDb, FindFileHint.Default);
+
+                sourceDb.ReadDwgFile(dwgFileFullPath, System.IO.FileShare.Read, true, "");
+
+                // Create a variable to store the list of block identifiers
+                ObjectIdCollection blockIds = new ObjectIdCollection();
+
+                var tm = sourceDb.TransactionManager;
+
+                using (var myT = tm.StartOpenCloseTransaction())
+                {
+                    // Open the block table
+                    BlockTable bt = (BlockTable)myT.GetObject(sourceDb.BlockTableId, OpenMode.ForRead, false);
+
+                    // Check each block in the block table
+                    foreach (ObjectId btrId in bt)
+                    {
+                        BlockTableRecord btr =
+                        (BlockTableRecord)myT.GetObject(btrId, OpenMode.ForRead, false);
+
+                        // Only add named & non-layout blocks to the copy list
+                        if (!btr.IsAnonymous && !btr.IsLayout)
+                            blockIds.Add(btrId);
+                        btr.Dispose();
+                    }
+                }
+                // Copy blocks from source to destination database
+                var mapping = new IdMapping();
+                sourceDb.WblockCloneObjects(blockIds,
+                    destDb.BlockTableId,
+                    mapping,
+                    DuplicateRecordCloning.Replace,
+                    false);
+            }
+            catch (Autodesk.AutoCAD.Runtime.Exception ex)
+            {
+                ed.WriteMessage("\nError during copy: " + ex.Message);
+            }
+            sourceDb.Dispose();
+        }
+
         #endregion
 
         #endregion
