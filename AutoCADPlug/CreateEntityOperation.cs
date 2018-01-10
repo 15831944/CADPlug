@@ -174,6 +174,22 @@ namespace AutoCADPlug
         }
 
         /// <summary>
+        /// 由插入点、文字内容、文字高度创建单行文字
+        /// </summary>
+        /// <param name="position">插入点</param>
+        /// <param name="text">文字内容</param>
+        /// <param name="height">文字高度</param>
+        /// <returns></returns>
+        public DBText CreateDBText(Point3d position, string text, double height)
+        {
+            DBText txt = new DBText();
+            txt.Position = position;
+            txt.TextString = text;
+            txt.Height = height;
+            return txt;
+        }
+
+        /// <summary>
         /// 由插入点、文字内容、文字样式、文字高度、文字宽度创建多行文字
         /// </summary>
         /// <param name="textString">文字内容</param>

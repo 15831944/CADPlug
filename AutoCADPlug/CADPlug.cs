@@ -468,6 +468,7 @@ namespace AutoCADPlug
                 BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
                 BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
                 ObjectId refid = db.OverlayXref(@"C:\Users\admin\Desktop\psw.dwg", "psw");// 把外部文件转换为块定义
+
                 BlockReference br = new BlockReference(Point3d.Origin, refid); // 通过块定义创建块参照
                 btr.AppendEntity(br); //把块参照添加到块表记录
                 trans.AddNewlyCreatedDBObject(br, true); // 通过事务添加块参照到数据库
@@ -547,7 +548,6 @@ namespace AutoCADPlug
 
         #endregion
 
-        #region something test
 
         #region 测试命令
         public void test1()
@@ -903,14 +903,85 @@ namespace AutoCADPlug
 
         #region 测试添加文字
 
+        [CommandMethod("CreateText")]
+        public void CreateText()
+        {
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            ed.WriteMessage("添加扩展数据XDATA\n");
+            PromptSelectionOptions pso = new PromptSelectionOptions();
+            pso.MessageForAdding = "请选择实体集\n";
+            PromptSelectionResult psr = ed.GetSelection(pso);
+            if (psr.Status != PromptStatus.OK)
+            {
+                ed.WriteMessage("选择对象失败，退出");
+                return;
+            }
+            SelectionSet ss = psr.Value;
+            int count = ss.Count;
+            ed.WriteMessage("选择了{0}个实体", count);
+
+            //获取当前文档及数据库
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            //启动事务
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                //以读模式打开Block表
+                BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                //以写模式打开Block表记录Model空间
+                BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                foreach (ObjectId id in ss.GetObjectIds())
+                {
+                    using (Polyline rec = trans.GetObject(id, OpenMode.ForWrite) as Polyline)
+                    {
+                        if (rec == null)
+                        {
+                            ed.WriteMessage("选择的不是矩形！");
+                            return;
+                        }
+                        //创建一个单行文字对象
+                        DBText acText = new DBText();
+                        acText.Position = CalculatePosition(rec);
+                        acText.Height = 50;
+                        acText.TextString = "H500";
+                        //添加到模型空间
+                        btr.AppendEntity(acText);
+                        trans.AddNewlyCreatedDBObject(acText, true);
+                    }
+                }
+                //保存修改，关闭事务
+                trans.Commit();
+            }
+        }
+
+        private Point3d CalculatePosition(Polyline rec)
+        {
+            Point3d position;
+            Point3d p1 = rec.GetPoint3dAt(0);
+            Point3d p2 = rec.GetPoint3dAt(1);
+            Point3d p3 = rec.GetPoint3dAt(2);
+            double x = Math.Max(Math.Abs(p1.X - p2.X), Math.Abs(p2.X - p3.X));
+            double y = Math.Max(Math.Abs(p1.Y - p2.Y), Math.Abs(p2.Y - p3.Y));
+
+            if (x > y)
+            {
+                double px = (p1.X + p3.X) / 2 - 50;
+                double py = Math.Max(p1.Y, p3.Y) + 20;
+                position = new Point3d(px, py, 0);
+            }
+            else
+            {
+                double px = Math.Min(p1.X, p3.X) - 150;
+                double py = (p1.Y + p3.Y) / 2;
+                position = new Point3d(px, py, 0);
+            }
+
+            return position;
+        }
 
         #endregion
 
         #region 测试添加块引用
-      
-        #endregion
-
-        #region 测试生成.dwg文件
 
         [CommandMethod("TestReadDwgFile")]
         public void TestReadDwgFile()
@@ -951,7 +1022,7 @@ namespace AutoCADPlug
                         FileOpenMode.OpenForReadAndAllShare, false, null);
                     db.CloseInput(true);
                 }
-                catch (System.Exception ex)
+                catch
                 {
                     doc.Editor.WriteMessage("\nUnable to read drawing file.");
                     return;
@@ -1023,8 +1094,23 @@ namespace AutoCADPlug
             db.SaveAs(filepath, DwgVersion.Current);
         }
 
+
         #endregion
 
+        #region 测试生成.dwg文件
+
+        [CommandMethod("CreateDwgFile")]
+        public void CreateDwgFile()
+        {
+            Database db = new Database(true, true);
+            DBText txt = new DBText();
+            txt.Position = new Point3d();
+            txt.TextString = "PSWCAD.org22";
+            ToModalSpace(txt, db);
+            db.SaveAs(".\\psw_createdwgFile.dwg", DwgVersion.Current);
+        }
+
+        #endregion
 
         #region 测试从外部文件中读取块到当前数据库文件中
 
@@ -1078,9 +1164,21 @@ namespace AutoCADPlug
                 ed.WriteMessage("\nError during copy: " + ex.Message);
             }
             sourceDb.Dispose();
+
+            //显示到界面上
+            using (Transaction trans = destDb.TransactionManager.StartTransaction())
+            {
+                BlockTable bt = trans.GetObject(destDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                ObjectId refid = bt["psw"];
+                BlockReference br = new BlockReference(Point3d.Origin, refid); // 通过块定义创建块参照
+                btr.AppendEntity(br); //把块参照添加到块表记录
+                trans.AddNewlyCreatedDBObject(br, true); // 通过事务添加块参照到数据库
+                trans.Commit();
+            }
         }
 
-        #endregion
 
         #endregion
 
